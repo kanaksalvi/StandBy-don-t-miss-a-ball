@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>StandBy: don't miss a ball</title><meta name="theme-color" content="#07150F">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        :root{--bg:#07150F;--glass:rgba(14,38,29,.82);--line:rgba(255,255,255,.13);--ink:#EAF3EE;--mut:#93AB9E;--sig:#F5C518;--ok:#2FBF71;--amb:#FFB020;--red:#FF5A4F}
+        *{box-sizing:border-box}html,body{height:100%;margin:0}
+        body{background:radial-gradient(1100px 650px at 25% -10%,#12402F,var(--bg));color:var(--ink);font:16px/1.4 Barlow,system-ui,sans-serif;display:grid;grid-template-rows:auto 1fr;height:100dvh;overflow:hidden}
+        button,select,input{font:inherit;color:inherit}
+        button,.btn{cursor:pointer;border:1px solid var(--line);background:rgba(255,255,255,.07);padding:7px 13px;border-radius:10px;font-weight:600;transition:.15s;display:inline-block}
+        button:hover,.btn:hover{background:var(--sig);color:#07150F;transform:translateY(-1px)}
+        select{background:#0E261D;border:1px solid var(--line);border-radius:10px;padding:6px 8px}
+        :focus-visible{outline:3px solid var(--sig);outline-offset:2px}
+        .sm{font-size:13px;color:var(--mut);margin:0}
+        .top{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;padding:10px 20px;border-bottom:1px solid var(--line);background:rgba(0,0,0,.28)}
+        .logo{display:flex;align-items:center;gap:10px}.mark{width:36px;height:36px;border-radius:50%;background:conic-gradient(var(--sig),var(--ok),var(--sig));display:grid;place-items:center;color:#07150F;font:700 20px 'Barlow Condensed'}
+        .brand{font:700 28px/1 'Barlow Condensed';letter-spacing:.5px}.tag{font-size:12px;color:var(--mut);display:flex;gap:8px;align-items:center}
+        .chip{font:700 11px Barlow;padding:1px 8px;border-radius:99px;border:1px solid var(--mut)}.chip.on{background:var(--ok);color:#052E1A;border-color:var(--ok)}
+        .sb{display:flex;align-items:center;justify-content:center;gap:18px}.tm{font:600 14px 'Barlow Condensed';color:var(--mut);letter-spacing:.5px}
+        #score{font:700 42px/1 'Barlow Condensed'}#ov{font:600 18px 'Barlow Condensed';color:var(--mut);margin-left:6px}
+        .pill{padding:4px 14px;border-radius:99px;font:700 14px Barlow;background:rgba(255,255,255,.1)}.pill.brk{background:var(--red);color:#fff}
+        .ctl{display:flex;gap:8px;align-items:center}#demo{background:var(--sig);color:#07150F;border:0}#demo:hover{background:#fff}
+        main{display:grid;grid-template-columns:1fr 410px;min-height:0}
+        .stage{position:relative;min-height:0;overflow:hidden}#map{width:100%;height:100%}
+        .card{background:var(--glass);border:1px solid var(--line);border-radius:14px;padding:10px 14px;backdrop-filter:blur(10px);box-shadow:0 8px 28px rgba(0,0,0,.35)}
+        .ov{position:absolute;left:16px;top:14px;width:min(400px,46%);display:flex;flex-direction:column;gap:10px}
+        #nudge{border-left:5px solid var(--sig)}#trip{border-left:5px solid var(--ok)}.ov button{margin-top:6px;padding:4px 12px}
+        .legend{position:absolute;right:16px;top:14px;font-size:13px;color:var(--mut)}.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin:0 4px 0 8px}
+        #dc{position:absolute;left:16px;bottom:64px;width:min(350px,48%);border-left:6px solid var(--sig)}
+        #dc h3{margin:0;font:700 26px 'Barlow Condensed'}#dc p{margin:5px 0;font-size:15px}#dc .x{float:right;padding:0 8px;border:0;font-size:22px;background:none}
+        #story{position:absolute;right:16px;bottom:64px;width:min(360px,46%);border-left:6px solid var(--ok);font-size:17px}
+        .tl{position:absolute;left:16px;right:16px;bottom:10px}
+        #scr{-webkit-appearance:none;appearance:none;width:100%;height:10px;border-radius:6px;margin:0;background:linear-gradient(90deg,#2B4A3D var(--a,50%),var(--red) var(--a,50%),var(--red) var(--b,55%),#2B4A3D var(--b,55%))}
+        #scr::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--sig);border:3px solid #07150F}
+        #scr::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--sig);border:3px solid #07150F}
+        .stand polygon{fill:#1C4535;stroke:#3E7A62;stroke-width:1.5;cursor:pointer;transition:.2s}.stand:hover polygon{fill:#266049}.stand.me polygon{fill:var(--sig);stroke:#fff}
+        .stand text{font:700 14px Barlow;fill:var(--ink);pointer-events:none}.stand.me text{fill:#07150F}
+        .fac,.gate{cursor:pointer}.fac circle{fill:#0B2A20;stroke-width:5}.fac:hover circle{fill:#1B5A44}
+        .fac circle.hot{animation:pu 1.2s ease-in-out infinite}@keyframes pu{50%{stroke-width:9;opacity:.75}}
+        .ic{font:700 11px Barlow;fill:var(--ink);pointer-events:none}
+        .wl{font:700 12px Barlow;fill:var(--ink);paint-order:stroke;stroke:#07150F;stroke-width:3px}
+        .gate rect{fill:var(--sig)}.gate text{fill:#07150F;font:700 13px Barlow}
+        .rc{fill:none;stroke:#04100B;stroke-width:11;stroke-linejoin:round;stroke-linecap:round}
+        .rl{fill:none;stroke:var(--sig);stroke-width:6;stroke-dasharray:14 10;animation:fl 1s linear infinite}@keyframes fl{to{stroke-dashoffset:-24}}
+        @media(prefers-reduced-motion:reduce){.rl,.fac circle.hot{animation:none}button:hover{transform:none}}
+        .you circle{fill:#fff;stroke:var(--sig);stroke-width:4}.you text{font:700 13px Barlow;fill:#fff;paint-order:stroke;stroke:#07150F;stroke-width:3px}
+        aside{padding:14px;display:flex;flex-direction:column;gap:12px;overflow:auto;border-left:1px solid var(--line);background:rgba(0,0,0,.25)}
+        .seat{display:flex;justify-content:space-between;align-items:center;gap:10px}.seat b{display:block;font-size:16px}
+        .needs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+        .needs button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 2px;font-size:13px}.needs button span{font-size:22px}
+        .needs button.on{background:var(--sig);color:#07150F;border-color:var(--sig)}
+        .sf{font-size:14px;color:var(--mut);display:flex;gap:8px;align-items:center}.sf input{accent-color:var(--sig);width:18px;height:18px}
+        .hero{border:1px solid var(--line);border-radius:16px;padding:14px;background:linear-gradient(160deg,rgba(245,197,24,.16),rgba(255,255,255,.03))}
+        .nm{font:700 27px/1.1 'Barlow Condensed'}.stats{display:flex;gap:8px;margin-top:10px}
+        .stats div{flex:1;background:rgba(0,0,0,.28);border-radius:10px;padding:8px 4px;text-align:center}.stats .big{flex:1.4}
+        .stats b{display:block;font:700 30px/1 'Barlow Condensed'}.big b{color:var(--sig);font-size:40px}.stats span{font-size:12px;color:var(--mut)}
+        .d{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--red);margin:6px 3px 0 0}
+        .save{margin-top:10px;background:var(--ok);color:#052E1A;font-weight:700;border-radius:8px;padding:5px 10px;font-size:14px}
+        .go{width:100%;background:var(--sig);color:#07150F;border:0;padding:11px;font-size:17px}.go:hover{background:#fff}
+        .alt{display:flex;justify-content:space-between;gap:8px;width:100%;margin-top:6px;font-weight:500;font-size:14px}
+        #ask{display:flex;gap:6px;margin-top:auto}#ask input{flex:1;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.07);min-width:0}
+        .links{display:flex;gap:8px;flex-wrap:wrap}.links .btn,.links button{font-size:14px;padding:6px 10px}.links input{display:none}
+        dialog{border:1px solid var(--line);border-radius:18px;padding:22px;max-width:580px;width:92%;background:#0F2A21;color:var(--ink)}
+        dialog::backdrop{background:rgba(0,0,0,.7);backdrop-filter:blur(4px)}dialog h2{margin-top:0;font:700 32px/1.05 'Barlow Condensed'}
+        dialog input{padding:7px;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.07);margin:4px 4px 10px 0}
+        .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}.pri{background:var(--sig);color:#07150F;border:0}
+        table{border-collapse:collapse;width:100%;margin:10px 0}td,th{border-bottom:1px solid var(--line);padding:6px 4px;text-align:left;font-size:15px}
+        .bar2{height:8px;background:var(--red);display:block;margin-top:3px;border-radius:4px}
+        @media(max-width:900px){body{height:auto;overflow:auto;display:block}main{grid-template-columns:1fr}.stage{height:78vh}aside{border-left:0;border-top:1px solid var(--line)}.top{grid-template-columns:1fr}.ov,#dc,#story{width:calc(100% - 32px)}.legend{display:none}}
+    </style></head><body>
+<header class="top">
+    <div class="logo"><div class="mark">S</div><div><div class="brand">StandBy</div><div class="tag">Don't miss a ball <span class="chip" id="aichip"></span></div></div></div>
+    <div class="sb"><div><div class="tm" id="teams">Loading match</div><span id="score">0/0</span><span id="ov"></span></div><span class="pill" id="need"></span></div>
+    <div class="ctl"><button id="play">Play</button><select id="spd" aria-label="Replay speed"><option value="1">Real time</option><option value="30">30x</option><option value="120" selected>120x</option><option value="300">300x</option></select><button id="rush">Toilet rush</button><button id="demo">▶ Pitch demo</button></div>
+</header>
+<main>
+    <section class="stage"><svg id="map" viewBox="0 0 800 600" role="img" aria-label="Schematic stadium map"></svg>
+        <div class="ov"><div id="nudge" class="card" hidden></div><div id="trip" class="card" hidden></div></div>
+        <div class="legend card">Queue<i style="background:var(--ok)"></i>&lt;3 min<i style="background:var(--amb)"></i>3-8<i style="background:var(--red)"></i>&gt;8<p class="sm" id="honest" style="margin-top:3px"></p></div>
+        <div id="dc" class="card" hidden></div><div id="story" class="card" hidden></div>
+        <div class="tl"><input type="range" id="scr" min="0" max="100" step="0.1" aria-label="Match time"><p class="sm">Drag to time-travel. Red = innings break. Keys: Space play, T toilets, F food, A aid, G gate.</p></div>
+    </section>
+    <aside>
+        <div class="seat"><div><span class="sm">Your seat</span><b id="seat"></b></div><button id="chg">Change</button></div>
+        <div class="needs"><button data-t="toilet"><span>🚻</span>Toilets</button><button data-t="food"><span>🍔</span>Food</button><button data-t="aid"><span>🩹</span>First aid</button><button data-t="gate"><span>🚪</span>Exit gate</button></div>
+        <label class="sf"><input type="checkbox" id="sfo"> ♿ Step-free route only</label>
+        <div id="res"></div>
+        <form id="ask"><input id="q" placeholder="Ask: jaldi kuch khane ko, wheelchair" aria-label="Ask StandBy"><button>Ask</button></form>
+        <div id="ans" class="sm"></div>
+        <div class="links"><button id="rules">Umpire guide</button><button id="lab">Queue lab</button><label class="btn">Load T20 match<input type="file" id="file" accept=".json"></label></div>
+    </aside>
+</main>
+<dialog id="welcome"><h2>Don't miss a ball.</h2><p>StandBy plans your walk to toilets, food and gates from your seat, and shows what each trip costs in balls of play missed. Where are you sitting?</p>
+    <select id="ws"></select><br><input id="wb" placeholder="Block" size="6"><input id="wr" placeholder="Row" size="6"><input id="wn" placeholder="Seat" size="6">
+    <div class="row"><button id="wgo">Show me around</button><button id="wdemo" class="pri">▶ Watch the 40-second pitch</button></div></dialog>
+<dialog id="rulesd"><h2>What the umpire is telling you</h2><div id="rl"></div><div class="row"><button class="cl">Close</button></div></dialog>
+<dialog id="labd"><h2>Which plan gets fans back to their seats sooner?</h2>
+    <p class="sm">A toilet rush in the first 10 minutes of the innings break. Fans start in random stands. The four toilet blocks are different sizes, as real ones are. All numbers are simulated.</p>
+    <label>Fans heading to toilets <select id="ln"><option>1000<option selected>3000<option>6000</select></label>
+    <label>Share using StandBy (%) <select id="la"><option>30<option>60<option selected>100</select></label>
+    <div class="row"><button id="lr" class="pri">Run the test</button><button class="cl">Close</button></div><div id="lo"></div></dialog>
+<script>
+    const $=s=>document.querySelector(s),NS='http://www.w3.org/2000/svg',BALL=.72,AI_ENDPOINT='';// set to '/api/intent' after deploying api/intent.js
+    const CX=400,CY=300,RX=300,RY=215,ABBR=['N','NE','E','SE','S','SW','W','NW'];
+    const pt=(i,s)=>{const a=(i*15-90)*Math.PI/180;return[CX+s*RX*Math.cos(a),CY+s*RY*Math.sin(a)]};
+    // ---------- stadium graph (replace with a real traced layout later)
+    const N={},ADJ={};
+    const addN=(id,xy,o={})=>{N[id]={id,xy,...o};ADJ[id]=[]};
+    const link=(a,b,d,sf=true)=>{ADJ[a].push([b,d,sf]);ADJ[b].push([a,d,sf])};
+    for(let i=0;i<24;i++)addN('c'+i,pt(i,.93));
+    for(let i=0;i<24;i++)link('c'+i,'c'+(i+1)%24,26,i!=5&&i!=17);
+    const STANDS=['North','North-east','East','South-east','South','South-west','West','North-west'];
+    STANDS.forEach((n,k)=>{addN('s'+k,pt(k*3,.74),{name:n+' stand'});link('s'+k,'c'+k*3,40)});
+    for(let k=0;k<6;k++){addN('g'+k,pt(1+k*4,1.14),{name:'Gate '+(k+1)});link('g'+k,'c'+(1+k*4),20)}
+    const FAC=[['food','Food court north',0,20,.6,1.3],['food','Food court east',6,20,.6,.8],['food','Food court south',12,20,.6,1.1],['food','Food court west',18,20,.6,1],
+        ['toilet','Toilets north-east',3,40,1.5,1.2],['toilet','Toilets south-east',10,24,1.5,1],['toilet','Toilets south-west',15,40,1.5,1],['toilet','Toilets north-west',22,16,1.5,1,0],
+        ['aid','First aid east',8,2,.3,0],['aid','First aid west',20,2,.3,0]
+    ].map(([type,name,i,c,mu,w,sf],j)=>({id:'f'+j,type,name,i,cap:c*mu,w,sf:sf!==0}));
+    FAC.forEach(f=>{addN(f.id,pt(f.i,1.03),{name:f.name});link(f.id,'c'+f.i,12,f.sf)});
+    function path(src,dst,sfo,sg){const D={[src]:0},prev={},Q=new Set(Object.keys(N));
+        while(Q.size){let u=null;for(const k of Q)if(D[k]!=null&&(u==null||D[k]<D[u]))u=k;if(u==null||u==dst)break;Q.delete(u);
+            for(const[v,d,sf]of ADJ[u]){if(sfo&&!sf)continue;const nd=D[u]+d/60*(1+.6*sg);if(D[v]==null||nd<D[v]){D[v]=nd;prev[v]=u}}}
+        if(D[dst]==null)return null;const p=[dst];while(p[0]!=src)p.unshift(prev[p[0]]);return{min:D[dst],p}}
+    // ---------- match replay
+    let M,T=0,play=false,last=0,lastIdx=0,origin='s3',seat={},sel=null,lang='en',dcT,lastCard=null,minKey=-1,routeG,youG,away=null,storyOn=false;
+    function fake(){let s=7;const r=()=>(s=s*16807%2147483647)/2147483647;
+        const inn=t=>({team:t,overs:Array.from({length:20},(_,o)=>({over:o,deliveries:Array.from({length:6},()=>{const x=r(),run=x<.35?0:x<.65?1:x<.75?2:x<.9?4:6;let d={runs:{batter:run,extras:0,total:run}};
+                    if(x<.03){d={extras:{wides:1},runs:{batter:0,extras:1,total:1}}}else if(x<.05){d={extras:{noballs:1},runs:{batter:0,extras:1,total:1}}}else if(x>.97)d.wickets=[{player_out:'x',kind:'caught'}];return d})}))});
+        return{info:{teams:['Demo XI','Sample XI'],venue:'Demo ground',dates:['synthetic']},innings:[inn('Demo XI'),inn('Sample XI')]}}
+    function parse(j){const ev=[],brk=[];let t=0,tot1=0;
+        j.innings.forEach((inn,ii)=>{let r=0,w=0,lg=0;
+            inn.overs.forEach(o=>{let lb=0;o.deliveries.forEach(d=>{const ex=d.extras||{};r+=d.runs.total;const wk=(d.wickets||[])[0];if(wk)w++;
+                if(!ex.wides&&!ex.noballs){lb++;lg++}
+                ev.push({ii,t,over:o.over+'.'+lb,run:d.runs.batter,ex,wk,rv:d.review,r,w,lbs:lg,team:inn.team,tgt:ii?tot1+1:0});t+=BALL})});
+            if(!ii){tot1=r;brk.push({s:t,e:t+20});t+=20}});
+        const i=j.info||{};return{ev,brk,end:t,teams:(i.teams||[]).join(' vs '),venue:i.venue||'',date:(i.dates||[''])[0]}}
+    const idx=t=>{let a=0,b=M.ev.length;while(a<b){const m=(a+b)>>1;M.ev[m].t<=t?a=m+1:b=m}return a};
+    // ---------- queue model: fluid queue per facility, demand jumps in the innings break
+    const mult=(ty,t)=>{for(const b of M.brk){if(t>=b.s&&t<b.s+10)return ty=='toilet'?10:7;if(t>=b.s+10&&t<b.e)return 4}return 1};
+    const surge=t=>{for(const b of M.brk){if(t>=b.s&&t<b.s+10)return 1;if(t>=b.s+10&&t<b.e)return .5}return .1};
+    function buildQ(){FAC.forEach(f=>{f.Q=[];let q=0;const base=f.type=='toilet'?5:2.2;
+        for(let t=0;t<=Math.ceil(M.end)+1;t++){f.Q.push(q);if(f.type!='aid')q=Math.max(0,q+base*f.w*mult(f.type,t)-f.cap)}})}
+    const wt=(f,t)=>f.type=='aid'?0:(f.Q[Math.min(f.Q.length-1,t|0)]||0)/f.cap;
+    const col=w=>w<3?'#2FBF71':w<8?'#FFB020':'#FF5A4F';
+    // ---------- map
+    const svg=$('#map');
+    const el=(t,a={},p=svg)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);p.append(e);return e};
+    const ring=(a,b,s,n=8)=>Array.from({length:n+1},(_,j)=>pt(a+(b-a)*j/n,s));
+    const poly=p=>p.map(x=>x.join()).join(' ');
+    function drawMap(){
+        el('ellipse',{cx:CX,cy:CY,rx:RX*1.03,ry:RY*1.03,fill:'#0D2A20',stroke:'#2E5B49','stroke-width':2});
+        el('polygon',{points:poly(ring(0,24,.93,48)),fill:'none',stroke:'#2E5B49','stroke-width':18});
+        el('polygon',{points:poly(ring(0,24,.93,48)),fill:'none',stroke:'#173C2F','stroke-width':14});
+        STANDS.forEach((n,k)=>{const a=ring(k*3-1.35,k*3+1.35,.58),b=ring(k*3-1.35,k*3+1.35,.86).reverse();
+            const g=el('g',{class:'stand',tabindex:0,role:'button','aria-label':n+' stand, set as my seat'});el('polygon',{points:poly([...a,...b])},g);
+            const c=pt(k*3,.72);el('text',{x:c[0],y:c[1]+5,'text-anchor':'middle'},g).textContent=ABBR[k];el('title',{},g).textContent=n+' stand. Tap to sit here.';
+            g.onclick=()=>setSeat(k,seat.b,seat.r,seat.s);g.onkeydown=e=>e.key=='Enter'&&g.onclick()});
+        el('ellipse',{cx:CX,cy:CY,rx:RX*.5,ry:RY*.5,fill:'#3E8A5C'});el('ellipse',{cx:CX,cy:CY,rx:RX*.46,ry:RY*.46,fill:'none',stroke:'#fff','stroke-opacity':.6,'stroke-dasharray':'5 5'});
+        el('rect',{x:CX-9,y:CY-28,width:18,height:56,fill:'#D8C88E'});
+        FAC.forEach(f=>{const[x,y]=pt(f.i,1.07),g=el('g',{class:'fac',tabindex:0,role:'button','aria-label':f.name});
+            f.c=el('circle',{cx:x,cy:y,r:14},g);el('text',{x,y:y+4,class:'ic','text-anchor':'middle'},g).textContent={food:'F',toilet:'WC',aid:'+'}[f.type];
+            f.t=el('text',{x,y:y+31,class:'wl','text-anchor':'middle'},g);f.ti=el('title',{},g);
+            g.onclick=()=>show(f.type,f.id);g.onkeydown=e=>e.key=='Enter'&&g.onclick()});
+        for(let k=0;k<6;k++){const[x,y]=pt(1+k*4,1.19),g=el('g',{class:'gate',tabindex:0,role:'button','aria-label':'Gate '+(k+1)});
+            el('rect',{x:x-11,y:y-11,width:22,height:22,rx:4},g);el('text',{x,y:y+5,'text-anchor':'middle'},g).textContent=k+1;
+            g.onclick=()=>show('gate','g'+k);g.onkeydown=e=>e.key=='Enter'&&g.onclick()}
+        routeG=el('g');youG=el('g',{class:'you'})}
+    function updMarkers(){FAC.forEach(f=>{const w=wt(f,T),aid=f.type=='aid';f.c.setAttribute('stroke',aid?'#2FBF71':col(w));f.c.classList.toggle('hot',!aid&&w>=8);f.t.textContent=aid?'':Math.round(w)+' min';
+        f.ti.textContent=f.name+(aid?'':': about '+Math.round(w)+' min queue (simulated)')})}
+    function drawYou(){youG.replaceChildren();const[x,y]=N[origin].xy;el('circle',{cx:x,cy:y,r:9},youG);el('text',{x,y:y+26,'text-anchor':'middle'},youG).textContent='You'}
+    function setSeat(k,b='',r='',s=''){seat={k,b,r,s};origin='s'+k;
+        $('#seat').textContent=STANDS[k]+' stand'+[b&&'block '+b,r&&'row '+r,s&&'seat '+s].filter(Boolean).map(x=>', '+x).join('');
+        document.querySelectorAll('.stand').forEach((g,i)=>g.classList.toggle('me',i==k));drawYou();if(M)nudge();if(sel)show(sel.type,sel.pick)}
+    // ---------- routing and options
+    function opts(type,t){const sf=$('#sfo').checked,sg=surge(t);
+        const L=type=='gate'?Object.values(N).filter(n=>n.id[0]=='g'):FAC.filter(f=>f.type==type);
+        return L.map(f=>{const r=path(origin,f.id,sf,sg);if(!r)return null;const gate=type=='gate',wait=gate?0:wt(f,t),svc=gate||type=='aid'?0:1,total=gate?r.min:2*r.min+wait+svc;
+            return{f,r,walk:r.min,wait,total,balls:total/BALL}}).filter(Boolean).sort((a,b)=>a.total-b.total)}
+    const n1=m=>m<1?'<1':Math.round(m);
+    const dots=n=>`<div title="Each dot is one ball of play you would miss">${'<i class="d"></i>'.repeat(Math.min(18,Math.round(n)))}${n>18?'+':''} <span class="sm">${(n/6).toFixed(1)} overs of play</span></div>`;
+    const EMPTY='<p class="sm">Pick what you need above, or tap any marker on the map. Every route is planned from your seat and priced in balls of play missed.</p>';
+    const inBreak=t=>M.brk.some(b=>t>=b.s&&t<b.e);
+    function show(type,pick){sel={type,pick};document.querySelectorAll('.needs button').forEach(b=>b.classList.toggle('on',b.dataset.t==type));
+        const O=opts(type,T),res=$('#res');
+        if(!O.length){res.innerHTML='<p>No step-free route reaches these. Untick "Step-free" to see all options, or ask venue staff for help.</p>';routeG.replaceChildren();return}
+        const P=(pick&&O.find(o=>o.f.id==pick))||O[0],A=O.filter(o=>o!==P).slice(0,2),gate=type=='gate',nr=[...O].sort((a,b)=>a.walk-b.walk)[0],sv=nr.balls-P.balls;
+        res.innerHTML=`<div class="hero"><div class="nm">${P.f.name}</div><div class="stats"><div><b>${n1(P.walk)}</b><span>min walk${gate?'':' each way'}</span></div>
+ ${gate?'':`<div><b style="color:${col(P.wait)}">${n1(P.wait)}</b><span>min queue</span></div><div class="big"><b>${Math.round(P.balls)}</b><span>balls missed</span></div>`}</div>
+ ${gate?'':dots(P.balls)}${!gate&&nr!==P&&sv>=1?`<div class="save">Saves ${Math.round(sv)} balls vs the closest (${nr.f.name})</div>`:''}</div>`+
+            (gate||away?'':`<button class="go" style="margin-top:10px">I'm heading there →</button>`)+
+            (A.length?'<p class="sm" style="margin-top:10px">Other options</p>':'')+A.map(o=>`<button class="alt" data-id="${o.f.id}" data-t="${type}"><span>${o.f.name}</span><span>${n1(o.walk)} min walk${gate?'':' · '+Math.round(o.balls)+' balls'}</span></button>`).join('');
+        routeG.replaceChildren();const pts=P.r.p.map(id=>N[id].xy.join()).join(' ');el('polyline',{points:pts,class:'rc'},routeG);el('polyline',{points:pts,class:'rl'},routeG)}
+    function startTrip(){away={t:T,i:idx(T),o:(M.ev[Math.max(0,idx(T)-1)]||{}).over};if(!play)$('#play').click();tripUI();if(sel)show(sel.type,sel.pick)}
+    $('#res').onclick=e=>{const b=e.target.closest('.alt');if(b)return show(b.dataset.t,b.dataset.id);if(e.target.closest('.go'))startTrip()};
+    document.querySelectorAll('.needs button').forEach(b=>b.onclick=()=>show(b.dataset.t));
+    $('#sfo').onchange=()=>{if(M)nudge();sel&&show(sel.type,sel.pick)};
+    // ---------- "while you were away" recap: facts come from the ball-by-ball data, AI only phrases them
+    function tripUI(){const t=$('#trip');if(!away){t.hidden=true;return}t.hidden=false;
+        t.innerHTML=`<b>You are away from your seat.</b> Left at over ${away.o||'0.0'}. Keep watching, then:<br><button id="back">I'm back</button>`}
+    $('#trip').onclick=async e=>{if(!e.target.closest('#back'))return;const a=away;away=null;const i=idx(T),ev=M.ev.slice(a.i,i),t=$('#trip');
+        if(!ev.length){t.innerHTML='<b>Welcome back.</b> No play while you were away, so you missed nothing. Going during the break is the smart move.';return}
+        const c=f=>ev.filter(f).length,last=ev[ev.length-1],facts=`${ev.length} balls missed: ${c(e=>e.run==4)} fours, ${c(e=>e.run==6)} sixes, ${c(e=>e.wk)} wickets. Score now ${last.r}/${last.w} after ${last.over} overs.`;
+        t.innerHTML='<b>Welcome back.</b> <span id="rc">'+facts+'</span> <span class="sm" id="rcs">Counted from the match data.</span>';
+        if(AI_ENDPOINT)try{const r=await fetch(AI_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({facts})}),j=await r.json();
+            if(j.recap){$('#rc').textContent=j.recap;$('#rcs').textContent='Phrased by an AI model from the counted facts: '+facts}}catch(x){}
+        if(sel)show(sel.type,sel.pick)};
+    // ---------- nudges: when to go
+    function nextGap(){const i=idx(T);for(let j=i;j<M.ev.length&&j<i+60;j++){const e=M.ev[j];if(e.over.endsWith('.6')&&!e.wk&&e.t>T&&e.ii==M.ev[Math.min(i,M.ev.length-1)].ii)return{o:e.over.split('.')[0]*1+1,m:e.t-T}}return null}
+    function nudge(){const n=$('#nudge'),b=M.brk[0];if(!b){n.hidden=true;return}
+        const o=opts('toilet',T)[0];if(!o){n.hidden=true;return}
+        const w0=Math.round(o.wait),w1=Math.round(wt(o.f,b.s+8)),m=Math.round(b.s-T);let h;
+        if(T<b.s-15)h=`<b>No rush yet.</b> Innings break in about ${m} min. Your best toilets: ${w0} min queue now, about ${w1} min in the break.`;
+        else if(T<b.s)h=`<b>Go before the break.</b> It starts in ${m} min. ${o.f.name}: ${w0} min now, about ${w1} min once it starts.<br><button data-go="toilet">Show the route</button>`;
+        else if(T<b.e)h=`<b>Innings break${T<b.s+10?': peak rush':''}.</b> Best toilets now: ${o.f.name}, ${w0} min queue.<br><button data-go="toilet">Show the route</button>`;
+        else{const g=nextGap();h=`<b>Queues are settling.</b> ${o.f.name}: ${w0} min.${g?` Best moment to go: end of over ${g.o}, in about ${Math.max(1,Math.round(g.m))} min.`:''}`}
+        n.hidden=false;n.innerHTML=h}
+    $('#nudge').onclick=e=>{const t=e.target.dataset.go;if(t)show(t)};
+    // ---------- umpire decision cards (rules text is fixed, never generated)
+    const R={wide:{n:'Wide',sig:'Stretches both arms out sideways.',m:'The ball was too wide for the batter to reach. The batting side gets 1 run and the ball is bowled again.',x:'It is not a legal ball, so the over gets an extra ball.',hi:'Gend batter ki pahunch se bahar thi. 1 run milta hai aur gend dobara phenkni padegi.'},
+        noball:{n:'No-ball',sig:'Holds one arm out sideways.',m:'An illegal delivery, often because the bowler overstepped. The batting side gets 1 run and the ball is bowled again.',x:'The next ball is a free hit. The batter can only be out in rare ways, such as a run-out.',hi:'Illegal gend, aksar line ke aage paer. 1 run milta hai aur agli gend free hit hoti hai.'},
+        out:{n:'Out',sig:'Raises one index finger.',m:'The batter is dismissed.',x:'A new batter walks in.',hi:'Batter out hai. Naya batter aayega.'},
+        four:{n:'Four',sig:'Waves one arm across the body.',m:'The ball reached the boundary along the ground: 4 runs.',x:'Play continues with the next ball.',hi:'Gend zameen par boundary tak gayi: 4 run.'},
+        six:{n:'Six',sig:'Raises both arms above the head.',m:'The ball cleared the boundary without bouncing: 6 runs.',x:'Play continues with the next ball.',hi:'Gend bina tappa khaye boundary ke paar: 6 run.'},
+        bye:{n:'Bye or leg-bye',sig:'Bye: raises an open hand overhead. Leg-bye: taps a raised knee.',m:'Runs were taken without the ball touching the bat. A bye missed everything. A leg-bye hit the batter\'s body.',x:'The runs go to the team total, not to the batter.',hi:'Bat se lage bina run liye gaye. Run team ke khate mein jaate hain.'},
+        review:{n:'DRS review',sig:'A player draws a "T" in the air with both hands.',m:'A team is challenging the on-field decision. The third umpire checks replays, ball-tracking and edge detection.',x:'"Umpire\'s call" means the on-field decision stays when the ball is only clipping the stumps.',hi:'Team ne decision challenge kiya. Third umpire replay dekhta hai.'}};
+    const KIND={bowled:'The ball hit the stumps.',caught:'A fielder caught the ball before it bounced.',lbw:'The ball hit the pad and would have hit the stumps.','run out':'The stumps were broken while the batter was short of the crease.',stumped:'The keeper broke the stumps while the batter was outside the crease.','hit wicket':'The batter broke their own stumps.'};
+    const PRI=['review','out','noball','wide','six','four','bye'];
+    function kind(e){const k=[];if(e.rv)k.push('review');if(e.wk)k.push('out');if(e.ex.noballs)k.push('noball');if(e.ex.wides)k.push('wide');if(e.run==6)k.push('six');if(e.run==4)k.push('four');if(e.ex.byes||e.ex.legbyes)k.push('bye');return PRI.find(x=>k.includes(x))}
+    function card(e,key){const r=R[key],hi=lang=='hi';lastCard={e,key};let x='';
+        if(key=='out'&&e.wk)x=`<p>${e.wk.kind}: ${KIND[e.wk.kind]||''}</p>`;if(key=='review'&&e.rv&&e.rv.decision)x=`<p>Review outcome: ${e.rv.decision}.</p>`;
+        const d=$('#dc');d.innerHTML=`<button class="x" aria-label="Close">×</button><h3>${r.n}</h3><p class="sm">Over ${e.over}, ${e.team} ${e.r}/${e.w}</p><p><b>The umpire:</b> ${r.sig}</p><p><b>It means:</b> ${hi?r.hi:r.m}</p>${x}<p><b>Next:</b> ${r.x}</p><button class="lg">${hi?'Show in English':'Samjhao in Hinglish'}</button>`;
+        d.hidden=false;clearTimeout(dcT);dcT=setTimeout(()=>d.hidden=true,16000)}
+    $('#dc').onclick=e=>{if(e.target.closest('.x'))$('#dc').hidden=true;if(e.target.closest('.lg')){lang=lang=='hi'?'en':'hi';card(lastCard.e,lastCard.key)}};
+    $('#rl').innerHTML=Object.values(R).map(r=>`<p><b>${r.n}.</b> ${r.sig} ${r.m} ${r.x}</p>`).join('');
+    // ---------- assistant: text becomes an intent, the engine answers from data
+    function parseIntent(s){s=s.toLowerCase();const h=r=>r.test(s),stepFree=h(/wheel|step.?free|ramp|walker|disab|elderly/);
+        const type=h(/toilet|washroom|restroom|\bloo\b|bathroom|shauch/)?'toilet':h(/food|khan|snack|bhook|hungry|\beat|water|pani|drink|chai|coffee/)?'food':h(/first.?aid|doctor|medical|ambulance|injur|hurt|chot/)?'aid':h(/gate|exit|bahar|leave|nikal/)?'gate':null;
+        if(!type&&h(/signal|umpire|decision|why|what was|kya hua|samjh|explain/))return{intent:'explain'};return type?{intent:'nearest',type,stepFree}:{intent:'unknown'}}
+    async function ask(text){let it=null,via='keyword matching';
+        if(AI_ENDPOINT){try{const r=await fetch(AI_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text})});it=await r.json();via='an AI model'}catch(e){}}
+        if(!it||it.intent=='unknown'){it=parseIntent(text);via='keyword matching'}let m;
+        if(it.intent=='nearest'){if(it.stepFree)$('#sfo').checked=true;show(it.type);const o=opts(it.type,T)[0];
+            m=o?`${o.f.name}: ${n1(o.walk)} min walk${it.type=='gate'?'':', '+n1(o.wait)+' min queue (simulated)'}.${it.stepFree?' Step-free route.':''}`:'No route found with those needs.'}
+        else if(it.intent=='explain')m=lastCard?`Last signal: ${R[lastCard.key].n}. ${R[lastCard.key].m}`:'No umpire signal yet. Each one will be explained as it happens.';
+        else m='I can find toilets, food, first aid and gates, or explain the last umpire signal. Try "nearest toilet".';
+        $('#ans').innerHTML=`${m} <i>Understood using ${via}.</i>`}
+    $('#ask').onsubmit=e=>{e.preventDefault();const v=$('#q').value.trim();if(v)ask(v)};
+    // ---------- lab: compare three plans for the break rush
+    function sim(st,n,ad){let s=11;const r=()=>(s=s*16807%2147483647)/2147483647,T4=FAC.filter(f=>f.type=='toilet'),dt=.25,K=160,Z=K+40;
+        const W=STANDS.map((_,k)=>T4.map(f=>path('s'+k,f.id,false,1).min)),Q=T4.map(()=>0),inf=T4.map(()=>0),
+            arr=T4.map(()=>new Float32Array(Z)),wq=T4.map(()=>new Float32Array(Z)),by=Array.from({length:K},()=>[]),F=[];
+        for(let i=0;i<n;i++){const k=Math.min(K-1,((r()+r())*5/dt)|0);by[k].push({s:r()*8|0,app:r()*100<ad})}
+        let snap=Q.map(()=>0);const arg=f=>{let b=0;T4.forEach((_,i)=>{if(f(i)<f(b))b=i});return b};
+        for(let k=0;k<Z;k++){if(k%8==0)snap=Q.map((q,i)=>q/T4[i].cap);
+            if(k<K)for(const p of by[k]){const w=W[p.s];let i;
+                if(st=='near'||!p.app)i=arg(j=>w[j]);else if(st=='empty')i=arg(j=>snap[j]+w[j]*.01);else i=arg(j=>w[j]+(Q[j]+inf[j])/T4[j].cap);
+                const k2=k+Math.ceil(w[i]/dt);arr[i][k2]++;inf[i]++;F.push({i,k2,w:w[i]})}
+            T4.forEach((f,i)=>{inf[i]-=arr[i][k];Q[i]=Math.max(0,Q[i]+arr[i][k]-f.cap*dt);wq[i][k]=Q[i]/f.cap})}
+        const b=F.map(f=>(2*f.w+wq[f.i][f.k2]+1)/BALL).sort((x,y)=>x-y);let mx=0;wq.forEach(a=>a.forEach(v=>mx=Math.max(mx,v)));
+        return{mean:b.reduce((a,c)=>a+c,0)/b.length,p95:b[Math.floor(b.length*.95)],mx}}
+    function labRun(n,a){const S=[['near','Everyone goes to the nearest'],['empty','Everyone goes to the emptiest (queue info 2 min old)'],['aware','StandBy spreads people by capacity']];
+        const R2=S.map(([k,l])=>({l,...sim(k,n,a)}));return{R2,d:(1-R2[2].mean/R2[0].mean)*100}}
+    $('#lr').onclick=()=>{const{R2,d}=labRun(+$('#ln').value,+$('#la').value),top=Math.max(...R2.map(r=>r.mean));
+        $('#lo').innerHTML=`<table><tr><th>Plan</th><th>Avg balls missed</th><th>Worst 5%</th><th>Longest queue</th></tr>${R2.map(r=>`<tr><td>${r.l}</td><td>${r.mean.toFixed(1)}<i class="bar2" style="width:${r.mean/top*100}%"></i></td><td>${r.p95.toFixed(1)}</td><td>${r.mx.toFixed(1)} min</td></tr>`).join('')}</table>
+ <p>${d>0.5?`Spreading people by capacity cuts the average by ${d.toFixed(0)}% against going to the nearest.`:'In this run, spreading people by capacity did not beat going to the nearest.'} Sending everyone to the emptiest block backfires because the crowd herds there. Results depend on the assumed toilet sizes and on how many fans use the app.</p>`};
+    // ---------- guided pitch demo
+    const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+    async function story(){if(storyOn){storyOn=false;return}storyOn=true;$('#demo').textContent='■ Stop demo';const b=M.brk[0];
+        const S=[[()=>{if(play)$('#play').click();sel=null;routeG.replaceChildren();$('#res').innerHTML=EMPTY;document.querySelectorAll('.needs button').forEach(x=>x.classList.remove('on'));jump(b.s-10);return'<b>1 · Before the break.</b> StandBy warns you early: go now, while queues are short.'},5500],
+            [()=>{jump(b.s+6);return'<b>2 · The break hits.</b> Thousands rush the same toilets and the queues turn red.'},5500],
+            [()=>{show('toilet');return'<b>3 · The smart route.</b> StandBy prices every walk in balls of play missed, not just distance.'},6500],
+            [()=>{const{d}=labRun(3000,100);return`<b>4 · Tested in simulation.</b> Spreading fans by toilet capacity cuts balls missed by ${Math.max(0,d).toFixed(0)}% vs everyone going to the nearest.`},7000],
+            [()=>{$('#spd').value=120;jump(b.e+1);show('toilet');startTrip();return'<b>5 · Live play.</b> You nip out. The match keeps going without you...'},5500],
+            [()=>{const k=$('#back');if(k)k.click();return'<b>6 · Back at your seat.</b> One line tells you exactly what you missed.'},6000]];
+        for(const[f,ms]of S){if(!storyOn)break;const c=f();$('#story').hidden=false;$('#story').innerHTML=c;await sleep(ms)}
+        storyOn=false;$('#story').hidden=true;$('#demo').textContent='▶ Pitch demo'}
+    // ---------- wiring
+    const rushT=()=>M.brk[0].s+6;
+    function jump(t){T=Math.max(0,t);lastIdx=idx(T);away=null;tripUI();minKey=-1}
+    function start(j,syn){M=parse(j);M.syn=syn;buildQ();$('#scr').max=M.end;const b=M.brk[0];$('#scr').style.setProperty('--a',b.s/M.end*100+'%');$('#scr').style.setProperty('--b',b.e/M.end*100+'%');jump(rushT());
+        $('#aichip').textContent=AI_ENDPOINT?'AI on':'AI off';$('#aichip').classList.toggle('on',!!AI_ENDPOINT);
+        $('#honest').textContent=(syn?'Demo match data. ':'Real match data'+(M.venue?', '+M.venue:'')+'. ')+'Crowd and queues simulated. Schematic map.'}
+    function paint(){if(!M)return;const i=idx(T),e=M.ev[i-1]||M.ev[0],inB=inBreak(T);
+        $('#teams').textContent=(M.teams?M.teams+' · ':'')+e.team;$('#score').textContent=i?e.r+'/'+e.w:'0/0';$('#ov').textContent=i?e.over+' ov':'';
+        const ov=+e.over.split('.')[0],p=$('#need');p.classList.toggle('brk',inB);p.textContent=(play&&!inB?'● ':'')+(inB?'Innings break':e.tgt?`Target ${e.tgt}. Needs ${e.tgt-e.r} from ${120-e.lbs}`:ov<6?'Powerplay':ov<16?'Middle overs':'Death overs');
+        if(i>lastIdx){let key=null;for(let j=lastIdx;j<i;j++){const k=kind(M.ev[j]);if(k&&(!key||PRI.indexOf(k)<=PRI.indexOf(key.k)))key={k,e:M.ev[j]}}if(key)card(key.e,key.k)}lastIdx=i;
+        if(document.activeElement!=$('#scr'))$('#scr').value=T;
+        if((T|0)!=minKey){minKey=T|0;updMarkers();nudge();if(sel)show(sel.type,sel.pick)}}
+    function frame(ts){if(play&&last&&M)T=Math.min(M.end,T+(ts-last)/60000*+$('#spd').value);last=ts;paint();requestAnimationFrame(frame)}
+    $('#play').onclick=()=>{play=!play;$('#play').textContent=play?'Pause':'Play'};
+    $('#scr').oninput=e=>{T=+e.target.value;lastIdx=idx(T)};
+    $('#rush').onclick=()=>jump(rushT());$('#demo').onclick=story;
+    $('#file').onchange=e=>{const f=e.target.files[0];if(f)f.text().then(t=>{const j=JSON.parse(t);
+        if(!j.innings||j.innings.length<2||j.innings[0].overs.length>20)throw 0;start(j,false)}).catch(()=>alert('Please choose a Cricsheet T20 match JSON file with two innings.'))};
+    $('#ws').innerHTML=STANDS.map((n,k)=>`<option value="${k}">${n} stand</option>`).join('');$('#ws').value=3;
+    $('#wgo').onclick=()=>{setSeat(+$('#ws').value,$('#wb').value,$('#wr').value,$('#wn').value);$('#welcome').close()};
+    $('#wdemo').onclick=()=>{setSeat(3,'2','2','15');$('#welcome').close();story()};
+    $('#chg').onclick=()=>$('#welcome').showModal();
+    $('#rules').onclick=()=>$('#rulesd').showModal();$('#lab').onclick=()=>$('#labd').showModal();
+    document.querySelectorAll('dialog .cl').forEach(b=>b.onclick=()=>b.closest('dialog').close());
+    addEventListener('keydown',e=>{if(/INPUT|SELECT|BUTTON/.test(e.target.tagName)||e.target.closest('dialog')||e.metaKey||e.ctrlKey)return;
+        const k=e.key.toLowerCase(),m={t:'toilet',f:'food',a:'aid',g:'gate'};if(k==' '){e.preventDefault();$('#play').click()}else if(m[k])show(m[k])});
+    drawMap();setSeat(3,'2','2','15');$('#res').innerHTML=EMPTY;
+    fetch('match.json').then(r=>r.ok?r.json():Promise.reject()).then(j=>start(j,false)).catch(()=>start(fake(),true));
+    requestAnimationFrame(frame);$('#welcome').showModal();
+</script></body></html>
