@@ -2,7 +2,7 @@
 
 **An in-stadium companion that tells cricket fans where to go, when to go, and exactly how much play each trip will cost them.**
 
-> 🔗 **Live demo:** `<paste your Vercel link here>`
+> 🔗 **Live demo:** `https://standby-don-t-miss-a-ball.vercel.app/`
 
 
 ## 1. The problem
