@@ -176,15 +176,5 @@ The AI layer needs a server, so it only runs after you deploy.
 - **Backend:** one Vercel serverless function (`api/intent.js`) that calls the Anthropic API.
 - **Model:** Claude Haiku, used only to parse intent and to phrase the recap from counted facts.
 
-## 9. Limitations
 
-- The map is a schematic and queue data is simulated.
-- Intent parsing covers four needs (toilets, food, first aid, gates) plus "explain the last signal."
-- The umpire explainer covers common signals only.
-- Match data assumes a 20-over, two-innings game.
 
-## 10. Credits and AI disclosure
-
-- Match data: [Cricsheet](https://cricsheet.org). Please check their licence and attribution terms before redistributing data.
-- Built with **Emergent** and **Claude**. Claude Haiku runs inside the app for language understanding.
-- Built by **`<your name>`** as an assignment for the Dream11 Forward Deployment Engineer internship.
